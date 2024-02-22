@@ -29,7 +29,8 @@ def load_mx_rec(rec_path):
         
         if not os.path.exists(label_path):
             os.makedirs(label_path)
-        
+            
+        img = cv2.resize(img, (128, 128))  # Resize image to 128x128
         cv2.imwrite(os.path.join(label_path, str(idx).zfill(8) + '.jpg'), img)
 
 
@@ -42,12 +43,12 @@ def load_image_from_bin(bin_path, save_dir, name):
     for idx in tqdm(range(len(bins))):
         _bin = bins[idx]
         img = mx.image.imdecode(_bin).asnumpy()
+        img = cv2.resize(img, (128, 128))  # Resize image to 128x128
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         cv2.imwrite(os.path.join(save_dir, str(idx+1).zfill(5)+'.jpg'), img)
         if idx % 2 == 0:
             label = 1 if issame_list[idx//2] == True else -1
             file.write(str(idx+1).zfill(5) + '.jpg' + ' ' + str(idx+2).zfill(5) +'.jpg' + ' ' + str(label) + '\n')
-
 
 
 def generate_dataset_list(dataset_path,dataset_list):

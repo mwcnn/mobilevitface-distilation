@@ -1,8 +1,6 @@
 import os
 import torch.utils.data
 from torch.nn import DataParallel
-from model.backbone import CBAMResNet
-from model.margin import ArcMarginProduct
 from dataset.casia_webface import CASIAWebFace
 from dataset.agedb import AgeDB30
 from torch.optim import lr_scheduler
@@ -14,6 +12,13 @@ import argparse
 from tqdm import tqdm
 import torch.nn.functional as F
 
+from model.mobilevitface import mobilevit_xs
+from model.margin import ArcMarginProduct
+
+import time
+from IPython import embed
+from torchsummary import summary
+
 
 def run(args):
     ## GPU Settings
@@ -22,7 +27,6 @@ def run(args):
         multi_gpus = True
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
     ## Dataset
     # dataset loader
@@ -41,9 +45,8 @@ def run(args):
     agedbloader = torch.utils.data.DataLoader(agedbdataset, batch_size=128,
                                             shuffle=False, num_workers=4, drop_last=False)
 
-
     ## Model
-    HR_Net = CBAMResNet(num_layers=50, feature_dim=512)
+    HR_Net = mobilevit_xs((128, 128), 512)
     HR_Margin = ArcMarginProduct(in_feature=512, out_feature=trainset.class_nums, s=32.0)
 
     HR_Net.train()
@@ -67,6 +70,9 @@ def run(args):
     else:
         HR_Net = HR_Net.to(device)
         HR_Margin = HR_Margin.to(device)
+        
+    # Model Summary
+    summary(HR_Net, (3, 128, 128))
 
     ## Train and Evaluation
     best_agedb30_acc = 0.0
@@ -161,12 +167,11 @@ def run(args):
     print('finishing training')
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch for deep face recognition')
     parser.add_argument('--save_dir', type=str, default='checkpoint/teacher', help='model save dir')
     parser.add_argument('--batch_size', type=int, default=128, help='batch size')
-    parser.add_argument('--down_size', nargs='+', default=[28], help='down-sampling ratio')
+    parser.add_argument('--down_size', nargs='+', default=[32], help='down-sampling ratio')
     parser.add_argument('--data_dir', type=str, default='/data/sung/dataset/Face')
     parser.add_argument('--total_epoch', type=int, default=20, help='total epochs')
     parser.add_argument('--save_freq', type=int, default=5000, help='save frequency')

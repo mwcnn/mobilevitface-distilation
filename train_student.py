@@ -1,21 +1,25 @@
 import os
 import torch.utils.data
 from torch.nn import DataParallel
-from model.backbone import CBAMResNet
-from model.margin import ArcMarginProduct
 from dataset.casia_webface import CASIAWebFace
 from dataset.agedb import AgeDB30
 from torch.optim import lr_scheduler
 import torch.optim as optim
 from evaluation.eval_agedb import evaluation_10_fold, getFeatureFromTorch
-from utility.distill_loss import DistillLoss
-import time
 import numpy as np
 import torchvision.transforms as transforms
 import argparse
 from tqdm import tqdm
 import torch.nn.functional as F
+
+from model.mobilevitface import mobilevit_xs
+from model.margin import ArcMarginProduct
+from utility.distill_loss import DistillLoss
 from utility.hook import attention_manager
+
+import time
+from IPython import embed
+from torchsummary import summary
 
 
 def run(args):
@@ -25,7 +29,6 @@ def run(args):
         multi_gpus = True
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
     ## Dataset
     # dataset loader
@@ -47,11 +50,11 @@ def run(args):
 
     ## Model
     # Define Student Network (LR)
-    LR_Net = CBAMResNet(num_layers=50, feature_dim=512)
+    LR_Net = mobilevit_xs((128, 128), 512)
     LR_Margin = ArcMarginProduct(in_feature=512, out_feature=trainset.class_nums, s=32.0)
     
     # Define Teacher Network (HR)
-    HR_Net = CBAMResNet(num_layers=50, feature_dim=512)
+    HR_Net = mobilevit_xs((128, 128), 512)
     HR_Net.load_state_dict(torch.load(args.teacher_path)['net_state_dict'])
 
     HR_Margin = ArcMarginProduct(in_feature=512, out_feature=trainset.class_nums, s=32.0)
@@ -71,7 +74,6 @@ def run(args):
 
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[6, 11, 15, 17], gamma=0.1)
 
-
     # Load model to GPUs
     if multi_gpus:
         LR_Net = DataParallel(LR_Net).to(device)
@@ -86,13 +88,14 @@ def run(args):
 
         LR_Margin = LR_Margin.to(device)
         HR_Margin = HR_Margin.to(device)
-
+        
+    # Model Summary
+    summary(LR_Net, (3, 128, 128))
 
     # Add Hook
     target_layer = 'attention_target'
     LR_manager = attention_manager(LR_Net, multi_gpus, target_layer)
     HR_manager = attention_manager(HR_Net, multi_gpus, target_layer)
-    
     
     ## Train and Evaluation
     best_agedb30_acc = 0.0

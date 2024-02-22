@@ -20,7 +20,7 @@ def img_loader(path):
         print('Cannot load image ' + path)
 
 class AgeDB30(data.Dataset):
-    def __init__(self, root, file_list, down_size=112, transform=None, loader=img_loader):
+    def __init__(self, root, file_list, down_size=128, transform=None, loader=img_loader):
         self.root = root
         self.file_list = file_list
         self.transform = transform
@@ -53,7 +53,7 @@ class AgeDB30(data.Dataset):
         HR_imglist = [self.transform(HR_img_l), self.transform(cv2.flip(HR_img_l, 1)), self.transform(HR_img_r), self.transform(cv2.flip(HR_img_r, 1))]
         
         img_size = HR_imglist[0].size(-1)
-        if self.down_size != 112:
+        if self.down_size != 128:
             LR_imglist = []
             for ix in range(len(HR_imglist)):
                 LR_imp = HR_imglist[ix].unsqueeze(0)

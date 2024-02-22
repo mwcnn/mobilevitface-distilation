@@ -20,7 +20,7 @@ def img_loader(path):
 
 
 class CASIAWebFace(data.Dataset):
-    def __init__(self, root, file_list, down_size=[112], single=True, transform=None, loader=img_loader, flip=True):
+    def __init__(self, root, file_list, down_size=[128], single=True, transform=None, loader=img_loader, flip=True):
         self.root = root
         self.transform = transform
         self.loader = loader
@@ -65,7 +65,7 @@ class CASIAWebFace(data.Dataset):
             HR_img = torch.from_numpy(HR_img)
             
         # DownSampling
-        if len(self.down_size) == 1 and self.down_size[0] == 112:
+        if len(self.down_size) == 1 and self.down_size[0] == 128:
             return HR_img, label
         else:
             img_size = HR_img.size(-1)

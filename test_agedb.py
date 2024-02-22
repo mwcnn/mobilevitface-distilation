@@ -56,7 +56,7 @@ def run(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch for deep face recognition')
     parser.add_argument('--checkpoint_path', type=str, default='/home/sung/src/attention-transfer-LR-face/A-SKD_public_2/final_teacher/base_28/last_net.ckpt', help='model save dir')
-    parser.add_argument('--down_size', nargs='+', default=[28])
+    parser.add_argument('--down_size', nargs='+', default=[32])
     parser.add_argument('--batch_size', type=int, default=128, help='batch size')
     parser.add_argument('--class_num', type=int, default=10572, help='batch size')
     parser.add_argument('--data_dir', type=str, default='/home/sung/dataset/Face')
