@@ -272,8 +272,6 @@ class MobileViT(nn.Module):
         self.fc = nn.Linear(channels[-1], num_emb, bias=False)
 
     def forward(self, x):
-        x = self.defian(x)
-        
         x = self.conv1(x)
         x = self.mv2[0](x)
 
